@@ -71,7 +71,7 @@ for f in range(1, 45):
 	for detune in range(1, 100, 5):
 		for of in range(0, 100, 5):
 			temp = dx % (detune,of,freq)
-			param = 'Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
+			param = 'Algo:1,Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
 			with open("test.dsp", "w") as f:
 				f.write(temp)
 				f.close()
