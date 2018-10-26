@@ -25,7 +25,7 @@ sy = library("synths.lib");
 ve = library("vaeffects.lib");
 
 dx7_ORCHESTRA(freq,gain,gate) = 
-dx.dx7_algo(%d,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
+dx.dx7_algo(1,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
 with{
 	egR1(n) = ba.take(n+1,(80*2,53,54,56,76,99));
 	egR2(n) = ba.take(n+1,(56,46,15,74,73,76));
@@ -42,7 +42,7 @@ with{
 	ampModSens(n) = ba.take(n+1,(0,0,0,0,0,0));
 	opMode(n) = ba.take(n+1,(0,0,0,0,0,0));
 	opFreq(n) = ba.take(n+1,(1,1,2,2,2,2));
-	opDetune(n) = ba.take(n+1,(0,-6,6,0,0,0));
+	opDetune(n) = ba.take(n+1,(0,-6,1,0,0,0));
 	opRateScale(n) = ba.take(n+1,(0,0,0,0,0,0));
 	// feedback = 7 : dx.dx7_fdbkscalef/(2*ma.PI);
 	lfoDelay = 63;
@@ -55,16 +55,41 @@ with{
 
 dx7patch = dx7_ORCHESTRA(freq,gain,gate)
 with {
-     freq = 540;
+     freq = %d;
      gain = .5;
      gate = 1;
 };
 
 process = dx7patch;"""
 
-for i in range(32):
+for i in range(0, 1000):
 	with open("test.dsp", "w") as f:
 		temp = dx % i
+
 		f.write(temp)
 		f.close()
-		os.system('faust2plot test.dsp && ./test -n 100 >> output.txt')
+
+		os.system('faust test.dsp > junk.txt')
+		s = open("test.cpp").read()
+		s = s.replace('44100', '8000')
+		f = open("test.cpp", 'w')
+		f.write(s)
+		f.close()
+		os.system('g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> output.txt && echo \'\\n\' >> output.txt')
+
+
+# with open("test1.dsp", "w") as f:
+# 	temp = dx % 0
+# 	f.write(temp)
+# 	f.close()
+# 	os.system('faust2jaqt test1.dsp')
+# with open("test2.dsp", "w") as f:
+# 	temp = dx % 50
+# 	f.write(temp)
+# 	f.close()
+# 	os.system('faust2jaqt test2.dsp')
+# with open("test3.dsp", "w") as f:
+# 	temp = dx % 99
+# 	f.write(temp)
+# 	f.close()
+# 	os.system('faust2jaqt test3.dsp')
