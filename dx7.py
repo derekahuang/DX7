@@ -69,7 +69,7 @@ def equation(x):
 for f in range(1, 89):
 	freq = equation(f)
 	for detune in range(1, 100):
-		for of in range(1, 100):
+		for of in range(0, 99):
 			temp = dx % (detune,of,freq)
 			param = 'Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
 			with open("test.dsp", "w") as f:
