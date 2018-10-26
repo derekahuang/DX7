@@ -62,22 +62,22 @@ with {
 
 process = dx7patch;"""
 
-for i in range(0, 1000):
+for i in range(400, 500):
 	with open("test.dsp", "w") as f:
 		temp = dx % i
 
 		f.write(temp)
 		f.close()
 
-		os.system('faust test.dsp > junk.txt')
+		os.system('faust -a plot.cpp -o test.cpp test.dsp')
 
 		s = open("test.cpp").read()
 		s = s.replace('44100', '8000')
-		f = open("test.cpp", 'w')
+		f = open("ex.cpp", 'w')
 		f.write(s)
 		f.close()
 		
-		os.system('g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> output.txt && echo \'\\n\' >> output.txt')
+		os.system('g++ -Wall -g -lm -lpthread ex.cpp -o test && ./test -n 8000 >> output.txt && echo \'\\n\' >> output.txt')
 
 
 # with open("test1.dsp", "w") as f:
