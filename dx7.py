@@ -41,8 +41,8 @@ with{
 	// keyVelSens(n) = ba.take(n+1,(6,6,8,4,4,4)); // zero to 8
 	ampModSens(n) = ba.take(n+1,(0,0,0,0,0,0));
 	opMode(n) = ba.take(n+1,(0,0,0,0,0,0));
-	opFreq(n) = ba.take(n+1,(1,1,2,2,2,2));
-	opDetune(n) = ba.take(n+1,(0,-6,1,0,0,0));
+	opFreq(n) = ba.take(n+1,(1,%d,2,2,2,2));
+	opDetune(n) = ba.take(n+1,(0,-6,%d,0,0,0));
 	opRateScale(n) = ba.take(n+1,(0,0,0,0,0,0));
 	// feedback = 7 : dx.dx7_fdbkscalef/(2*ma.PI);
 	lfoDelay = 63;
@@ -62,22 +62,21 @@ with {
 
 process = dx7patch;"""
 
-for i in range(400, 500):
-	with open("test.dsp", "w") as f:
-		temp = dx % i
 
-		f.write(temp)
-		f.close()
+def equation(x):
+	return 440 * (2 ** (1/float(12))) ** (x - 49)
 
-		os.system('faust -a plot.cpp -o test.cpp test.dsp')
+for f in range(1, 89):
+	freq = equation(f)
+	for detune in range(1, 100):
+		for of in range(1, 100):
+			temp = dx % (detune,of,freq)
+			param = 'Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
+			with open("test.dsp", "w") as f:
+				f.write(temp)
+				f.close()
+			os.system('faust -a plot.cpp -o test.cpp test.dsp && sed -i \'.bak\' \'s/44100/8000/g\' test.cpp && echo %s >> output.txt && g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> output.txt' % param)
 
-		s = open("test.cpp").read()
-		s = s.replace('44100', '8000')
-		f = open("ex.cpp", 'w')
-		f.write(s)
-		f.close()
-		
-		os.system('g++ -Wall -g -lm -lpthread ex.cpp -o test && ./test -n 8000 >> output.txt && echo \'\\n\' >> output.txt')
 
 
 # with open("test1.dsp", "w") as f:
