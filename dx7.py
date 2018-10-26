@@ -66,10 +66,10 @@ process = dx7patch;"""
 def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
 
-for f in range(1, 89):
+for f in range(1, 45):
 	freq = equation(f)
-	for detune in range(1, 5):
-		for of in range(0, 5):
+	for detune in range(1, 100, 5):
+		for of in range(0, 100, 5):
 			temp = dx % (detune,of,freq)
 			param = 'Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
 			with open("test.dsp", "w") as f:
