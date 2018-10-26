@@ -70,11 +70,13 @@ for i in range(0, 1000):
 		f.close()
 
 		os.system('faust test.dsp > junk.txt')
+
 		s = open("test.cpp").read()
 		s = s.replace('44100', '8000')
 		f = open("test.cpp", 'w')
 		f.write(s)
 		f.close()
+		
 		os.system('g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> output.txt && echo \'\\n\' >> output.txt')
 
 
