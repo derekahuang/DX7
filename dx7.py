@@ -1,4 +1,6 @@
 import os
+from tqdm import tqdm
+import argparse
 
 dx = """
 import("stdfaust.lib");
@@ -66,18 +68,23 @@ process = dx7patch;"""
 def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
 
-for f in range(1, 45):
-	freq = equation(f)
-	for detune in range(1, 100, 5):
-		for of in range(0, 100, 5):
-			temp = dx % (detune,of,freq)
-			param = 'Algo:1,Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
-			with open("test.dsp", "w") as f:
-				f.write(temp)
-				f.close()
-			os.system('faust -a plot.cpp -o test.cpp test.dsp && sed -i \'.bak\' \'s/44100/8000/g\' test.cpp && echo %s >> output.txt && g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> output.txt' % param)
+def main(args):
+	for f in tqdm(range(45, 89)):
+		freq = equation(f)
+		for detune in range(1, 100, 5):
+			for of in range(0, 100, 5):
+				temp = dx % (detune,of,freq)
+				param = 'Algo:1,Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
+				with open("test.dsp", "w") as f:
+					f.write(temp)
+					f.close()
+				os.system('faust -a plot.cpp -o test.cpp test.dsp && sed -i \'.bak\' \'s/44100/8000/g\' test.cpp && echo {1} >> {0} && g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> {0}'.format(args.outfile, param))
 
-
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--outfile', type=str, default='output.txt')
+	args = parser.parse_args()
+	main(args)
 
 # with open("test1.dsp", "w") as f:
 # 	temp = dx % 0
