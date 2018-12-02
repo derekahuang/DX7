@@ -27,7 +27,7 @@ sy = library("synths.lib");
 ve = library("vaeffects.lib");
 
 dx7_ORCHESTRA(freq,gain,gate) = 
-dx.dx7_algo(1,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
+dx.dx7_algo(2,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
 with{
 	egR1(n) = ba.take(n+1,(80*2,53,54,56,76,99));
 	egR2(n) = ba.take(n+1,(56,46,15,74,73,76));
@@ -42,15 +42,15 @@ with{
 	keyVelSens(n) = ba.take(n+1,(2,2,3,1,1,1));
 	// keyVelSens(n) = ba.take(n+1,(6,6,8,4,4,4)); // zero to 8
 	ampModSens(n) = ba.take(n+1,(0,0,0,0,0,0));
-	opMode(n) = ba.take(n+1,(0,0,0,0,0,0));
+	opMode(n) = ba.take(n+1,(0,%d,0,0,0,0));
 	opFreq(n) = ba.take(n+1,(1,%d,2,2,2,2));
 	opDetune(n) = ba.take(n+1,(0,-6,%d,0,0,0));
-	opRateScale(n) = ba.take(n+1,(0,0,0,0,0,0));
+	opRateScale(n) = ba.take(n+1,(0,0,%d,0,0,0));
 	// feedback = 7 : dx.dx7_fdbkscalef/(2*ma.PI);
 	lfoDelay = 63;
 	lfoDepth = 6;
 	lfoSpeed = 30;
-	feedback = 10;
+	feedback = %d;
 	// lfoDepth = hslider("lfoDepth[OWL:B]",0,0,99,1);
 	// lfoSpeed = hslider("lfoSpeed[OWL:C]",0,0,99,1);
 };
@@ -69,16 +69,24 @@ def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
 
 def main(args):
-	for f in tqdm(range(45, 89)):
+	for f in tqdm(range(1, 88)):
 		freq = equation(f)
-		for detune in range(1, 100, 5):
-			for of in range(0, 100, 5):
-				temp = dx % (detune,of,freq)
-				param = 'Algo:1,Frequency:%s,opFreq:%s,opDetune:%s' % (str(freq), str(of), str(detune))
-				with open("test.dsp", "w") as f:
-					f.write(temp)
-					f.close()
-				os.system('faust -a plot.cpp -o test.cpp test.dsp && sed -i \'.bak\' \'s/44100/8000/g\' test.cpp && echo {1} >> {0} && g++ -Wall -g -lm -lpthread test.cpp -o test && ./test -n 8000 >> {0}'.format(args.outfile, param))
+		mode = 0
+		for feedback in range(0, 100, 10)
+			for ratescale in range(0, 100, 10):
+				for detune in range(1, 100, 10):
+					for of in range(0, 100, 10):
+						temp = dx % (mode,of,detune,ratescale,feedback,detune,of,freq)
+						param = 'Algo:2,Frequency:%s,opMode:%s,opFreq:%s,opDetune:%s,opRateScale:%s' 
+							% (str(freq), str(mode), str(of), str(detune), str(ratescale))
+						with open("test.dsp", "w") as f:
+							f.write(temp)
+							f.close()
+						os.system('faust -a plot.cpp -o test.cpp test.dsp && '
+							'sed -i \'.bak\' \'s/44100/8000/g\' test.cpp && '
+							'echo {1} >> {0} && '
+							'g++ -Wall -g -lm -lpthread test.cpp -o test && '
+							'./test -n 8000 >> {0}'.format(args.outfile, param))
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
