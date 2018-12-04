@@ -7,8 +7,8 @@ import random
 import math
 from tqdm import tqdm, trange
 
-data = np.load('samples.npy')
-labels = np.load('labels.npy')#[:,0:1]
+data = np.load('../samples.npy')
+labels = np.load('../labels.npy')#[:,0:1]
 
 m,n = data.shape
 print(data[0])
@@ -48,7 +48,7 @@ H6 = 64
 C1D = 1024 # filter size
 NC1 = 256 # number of channels
 C2D = 512 # filter size
-NC2 = 16 # number of channels
+NC2 = 64 # number of channels
 
 P = 4 # number of max pooling * pooling window size
 
@@ -96,7 +96,8 @@ C2_out_mp = tf.reshape(C2_out_mp,[-1, int((D/P)*NC2)])
 
 h1 = tf.nn.relu(tf.matmul(C2_out_mp,W_h1) + b_h1)
 h2 = tf.nn.relu(tf.matmul(h1,W_h2) + b_h2)
-h3 = tf.nn.relu(tf.matmul(h2,W_h3) + b_h3)
+d1 = tf.nn.dropout(h2, .3)
+h3 = tf.nn.relu(tf.matmul(d1,W_h3) + b_h3)
 y_hat = tf.matmul(h3, W_o) + b_o
 
 l = tf.square(tf.add(y_hat, -Y))
@@ -118,7 +119,7 @@ sess.run(GD_step, feed_dict={X: x_tr, Y: y_tr})
 x_te = data[35100:35200]
 y_te = labels[35100:35200]
 
-nepochs = 100
+nepochs = 50
 for i in trange(nepochs):
 	r = np.random.permutation(35100)
 	for j in trange(351):
