@@ -32,7 +32,7 @@ dx7_ORCHESTRA(freq,gain,gate) =
 dx.dx7_algo(%i,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
 with{
 	//egR1(n) = ba.take(n+1,(%d,%d,%d,%d,%d,%d));
-	egR1(n) = ba.take(n+1,(80*2,53,54,56,76,99));
+	egR1(n) = ba.take(n+1,(80,53,54,56,76,99));
 	//egR2(n) = ba.take(n+1,(%d,%d,%d,%d,%d,%d));
 	egR2(n) = ba.take(n+1,(56,46,15,74,73,76));
 	//egR3(n) = ba.take(n+1,(%d,%d,%d,%d,%d,%d));
@@ -99,18 +99,18 @@ params = {
 def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
 
-def main(args):
+def main(args, labels=None):
 	np.random.seed(7)
 	generated = []
 	count = 0
-	while count < args.num_samples:
+	pbar = tqdm(total = args.num_gen)
+	while count < args.num_gen:
 		if args.alg is None:
 			param_list = list(np.random.randint(0, high=32, size=(1)))
 		else:
 			param_list = [args.alg]
 		param_dict = {"alg": args.alg}
 		for k, v in sorted(params.items()):
-			print(v["name"])
 			sample = v["dist"](v["low"], high=v["high"], size=v["size"])
 			if v["name"] == "freq":
 				sample = equation(sample)
@@ -120,10 +120,10 @@ def main(args):
 			except:
 				print param_list
 				print sample
-			param_dict[v["name"]] = sample
+			if labels is not None:
+				if k in labels:
+					param_dict[v["name"]] = sample
 		temp = dx % tuple(param_list)
-
-		print(temp)
 
 		if temp in generated:
 			continue
@@ -134,16 +134,23 @@ def main(args):
 			f.write(temp)
 			f.close()
 		os.system('faust -a plot.cpp -o test.cpp test.dsp && '
-			'sed -i \'.bak\' \'s/44100/8000/g\' test.cpp && '
+			'sed -i \'.bak\' \'s/44100/{2}/g\' test.cpp && '
 			'echo {1} >> {0} && '
 			'g++ -Wall -g -lm -lpthread test.cpp -o test && '
-			'./test -n 8000 >> {0}'.format(args.outfile, param_dict_string))
+			'./test -n {3} >> {0}'.format(args.outfile, param_dict_string, args.sr, args.num_samples))
+		pbar.update(1)
 		count += 1
+	pbar.close()
 
 if __name__ == '__main__':
+	default_labels = list(range(12, 21)) # see params definition for what these correspond to
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--outfile', type=str, default='output.txt')
-	parser.add_argument('--num_samples', type=int, default=30000)
+	parser.add_argument('--num_gen', type=int, default=30000)
 	parser.add_argument('--alg', type=int, default=None)
+	parser.add_argument('--sr', type=int, default=8000)
+	parser.add_argument('--num_samples', type=int, default=None)
 	args = parser.parse_args()
-	main(args)
+	if args.num_samples is None:
+		args.num_samples = args.sr
+	main(args, labels = default_labels)
