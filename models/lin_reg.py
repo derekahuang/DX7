@@ -5,9 +5,10 @@ import tensorflow as tf
 import numpy as np
 import random
 import math
+from tqdm import tqdm, trange
 
-data = np.load('samples.npy')
-labels = np.load('labels.npy')
+data = np.load('../samples.npy')
+labels = np.load('../labels.npy')
 
 indices = random.sample(range(0, 35200), 100)
 
@@ -58,6 +59,7 @@ y_hat = tf.matmul(h3, W_o) + b_o
 l = tf.square(tf.add(y_hat, -y))
 loss = tf.reduce_mean(tf.add(l, l))
 
+vector_loss = tf.reduce_mean(tf.add(l, l), 0)
 GD_step = tf.train.AdamOptimizer(lr).minimize(loss)
 
 sess = tf.Session()
@@ -69,18 +71,25 @@ print ("The initial loss is: ", curr_loss)
 
 sess.run(GD_step, feed_dict={X: x_tr, y: y_tr})
 
-nepochs = 50
-for i in range(nepochs):
-	r = np.random.permutation(35200)
-	for j in range(352):
+x_te = data[35100:35200]
+y_te = labels[35100:35200]
 
+nepochs = 100
+for i in trange(nepochs):
+	r = np.random.permutation(35100)
+	for j in trange(351):
 		indices = r[j*100:(j+1)*100]
-		x_tr = data[indices] #[data[v] for v in indices]
-		y_tr = labels[indices] #[labels[v] for v in indices]
+		x = data[indices] #[data[v] for v in indices]
+		ya = labels[indices] #[labels[v] for v in indices]
 
-		sess.run(GD_step, feed_dict={X: x_tr, y: y_tr})
+		sess.run(GD_step, feed_dict={X: x, y: ya})
 
-curr_loss = sess.run(loss, feed_dict={X: data, y: labels})
-print ("The final training loss is: ", curr_loss)
+	cl = sess.run(loss, feed_dict={X:x_te, y:y_te})
+	vl = sess.run(vector_loss, feed_dict={X:x_te, y:y_te})
+	print()
+	print("The vectorized loss is: ", vl)
+	
+	print ("The final training loss is: ", cl)
+
                  
 sess.close()
