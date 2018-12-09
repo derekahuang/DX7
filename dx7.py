@@ -27,7 +27,7 @@ sy = library("synths.lib");
 ve = library("vaeffects.lib");
 
 dx7_ORCHESTRA(freq,gain,gate) = 
-dx.dx7_algo(2,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
+dx.dx7_algo(%i,egR1,egR2,egR3,egR4,egL1,egL2,egL3,egL4,outLevel,keyVelSens,ampModSens,opMode,opFreq,opDetune,opRateScale,feedback,lfoDelay,lfoDepth,lfoSpeed,freq,gain,gate)
 with{
 	egR1(n) = ba.take(n+1,(80*2,53,54,56,76,99));
 	egR2(n) = ba.take(n+1,(56,46,15,74,73,76));
@@ -36,7 +36,7 @@ with{
 	egL1(n) = ba.take(n+1,(98,99,99,98,99,99));
 	egL2(n) = ba.take(n+1,(98,93,92,98,92,92));
 	egL3(n) = ba.take(n+1,(36,90,0,36,0,0));
-	egL4(n) = ba.take(n+1,(0,0,0,0,0,0));
+	egL4(n) = ba.take(n+1,(1,0,0,0,0,0));
 	outLevel(n) = ba.take(n+1,(99,83,96,72,80,82));
 	// keyVelSens(n) = ba.take(n+1,(0,0,0,0,0,0));
 	keyVelSens(n) = ba.take(n+1,(2,2,3,1,1,1));
@@ -72,13 +72,12 @@ def main(args):
 	for f in tqdm(range(1, 88)):
 		freq = equation(f)
 		mode = 0
-		for feedback in range(0, 100, 10)
-			for ratescale in range(0, 100, 10):
+		for feedback in range(1, 100, 10):
+			for ratescale in range(1, 100, 10):
 				for detune in range(1, 100, 10):
-					for of in range(0, 100, 10):
-						temp = dx % (mode,of,detune,ratescale,feedback,detune,of,freq)
-						param = 'Algo:2,Frequency:%s,opMode:%s,opFreq:%s,opDetune:%s,opRateScale:%s' 
-							% (str(freq), str(mode), str(of), str(detune), str(ratescale))
+					for of in range(1, 100, 10):
+						temp = dx % (2,mode,of,detune,ratescale,feedback,freq)
+						param = 'Algo:2,Frequency:%s,opMode:%s,opFreq:%s,opDetune:%s,opRateScale:%s' % (str(freq), str(mode), str(of), str(detune), str(ratescale))
 						with open("test.dsp", "w") as f:
 							f.write(temp)
 							f.close()
@@ -87,6 +86,7 @@ def main(args):
 							'echo {1} >> {0} && '
 							'g++ -Wall -g -lm -lpthread test.cpp -o test && '
 							'./test -n 8000 >> {0}'.format(args.outfile, param))
+						exit()
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
