@@ -7,23 +7,9 @@ import random
 import math
 from tqdm import tqdm, trange
 
-data = np.load('../samples.npy')
-labels = np.load('../labels.npy')#[:,0:1]
-
-m,n = data.shape
-print(data[0])
-data = data.reshape([m,n,1,1])
-print(data[0])
-
-indices = random.sample(range(0, 35200), 100)
-
-x_tr = data[indices] #[data[v] for v in indices]
-y_tr = labels[indices] #[labels[v] for v in indices]
-
 # general parameters
-N = x_tr.shape[0] # number of training examples
-D = x_tr.shape[1] # dimensionality of the data
-C = y_tr.shape[1] # number of unique labels in the dataset
+D = 8000 # dimensionality of the data
+C = 36 # number of unique labels in the dataset
 
 def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
@@ -105,36 +91,33 @@ loss = tf.reduce_mean(tf.add(l, l))
 
 vector_loss = tf.reduce_mean(tf.add(l, l), 0)
 
-GD_step = tf.train.AdamOptimizer(lr).minimize(loss)
+learning_rate = tf.train.exponential_decay(.01, global_step, 100, .96, staircase=True)
+GD_step = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
 sess = tf.Session()
 init = tf.global_variables_initializer()
 sess.run(init)
 
-curr_loss = sess.run(loss, feed_dict={X: x_tr, Y: y_tr})
+data, labels = generate_samples(100)
+
+curr_loss = sess.run(loss, feed_dict={X: data, y: labels})
 print ("The initial loss is: ", curr_loss)
 
-sess.run(GD_step, feed_dict={X: x_tr, Y: y_tr})
+x_te, y_te = generate_samples(100)
 
-x_te = data[35100:35200]
-y_te = labels[35100:35200]
-
-nepochs = 50
+nepochs = 100
 for i in trange(nepochs):
-	r = np.random.permutation(35100)
-	for j in trange(351):
-		indices = r[j*100:(j+1)*100]
-		x = data[indices] #[data[v] for v in indices]
-		y = labels[indices] #[labels[v] for v in indices]
+	x_tr, y_tr = generate_samples(100)
+	m, n = x_tr.shape
+	x_tr = x_tr.reshape([m,n,1,1])
 
-		sess.run(GD_step, feed_dict={X: x, Y: y})
+	sess.run(GD_step, feed_dict={X: x_tr, y: y_tr})
 
-	cl = sess.run(loss, feed_dict={X:x_te, Y:y_te})
-	vl = sess.run(vector_loss, feed_dict={X:x_te, Y:y_te})
+	cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, y:y_te})
 	print()
-	print("The vectorized loss is: ", vl)
+	print("The vectorized loss is: ", v_loss)
 	
-	print ("The final training loss is: ", cl)
+	print ("The final training loss is: ", cur_loss)
 
                  
 sess.close()
