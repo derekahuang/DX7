@@ -32,16 +32,16 @@ H3 = 128
 #H5 = 128
 H4 = 64
 
-C1D = 128 # filter size
+C1D = 256 # filter size
 NC1 = 64 # number of channels
-C2D = 64 # filter size
+C2D = 128# filter size
 NC2 = 32 # number of channels
-C3D = 32 # filter size
+C3D = 64 # filter size
 NC3 = 16 # number of channels
 
 P = 4 # number of max pooling * pooling window size
 
-lr = .00001 # the learning rate (previously refered to in the notes as alpha)
+lr = .0001 # the learning rate (previously refered to in the notes as alpha)
 
 #weights and initialization 
 

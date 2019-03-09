@@ -6,7 +6,7 @@ import numpy as np
 import random
 import math
 from tqdm import tqdm, trange
-from data_generation.py import generate_samples
+from data_generation import generate_samples
 
 # data = np.load('../samples.npy')
 # labels = np.load('../labels.npy')
@@ -32,7 +32,7 @@ def equation(x):
 H1 = 1024 # number of hidden units. In general try to stick to a power of 2
 H2 = 512
 H3 = 128
-lr = .00001 # the learning rate (previously refered to in the notes as alpha)
+lr = .0001 # the learning rate (previously refered to in the notes as alpha)
 
 W_h1 = tf.Variable(tf.random_normal((D,H1), stddev = 0.01)) # mean=0.0
 W_h2 = tf.Variable(tf.random_normal((H1,H2), stddev = 0.01)) # mean=0.0
@@ -55,8 +55,12 @@ y_hat = tf.matmul(h3, W_o) + b_o
 l = tf.square(tf.add(y_hat, -y))
 loss = tf.reduce_mean(tf.add(l, l))
 
+global_step = tf.Variable(0, trainable=False)
+
+learning_rate = tf.train.exponential_decay(.01, global_step, 100, .96, staircase=True)
+
 vector_loss = tf.reduce_mean(tf.add(l, l), 0)
-GD_step = tf.train.AdamOptimizer(lr).minimize(loss)
+GD_step = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
 sess = tf.Session()
 init = tf.global_variables_initializer()
@@ -69,11 +73,11 @@ print ("The initial loss is: ", curr_loss)
 
 x_te, y_te = generate_samples(100)
 
-nepochs = 100
+nepochs = 10000
 for i in trange(nepochs):
 	x_tr, y_tr = generate_samples(100)
 
-	sess.run(GD_step, feed_dict={X: x_tr, y: y_tr})
+	sess.run(GD_step, feed_dict={X: x_te, y: y_te})
 
 	cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, y:y_te})
 	print()
