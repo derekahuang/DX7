@@ -6,7 +6,7 @@ import numpy as np
 import random
 import math
 from tqdm import tqdm, trange
-from data_generation import generate_samples
+from data_generation import generate_samples, generate_fixed_samples
 
 # data = np.load('../samples.npy')
 # labels = np.load('../labels.npy')
@@ -14,7 +14,7 @@ from data_generation import generate_samples
 
 # general parameters
 D = 8000 # dimensionality of the data
-C = 36
+C = 1
 
 def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
@@ -62,28 +62,33 @@ learning_rate = tf.train.exponential_decay(.01, global_step, 100, .96, staircase
 vector_loss = tf.reduce_mean(tf.add(l, l), 0)
 GD_step = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
-sess = tf.Session()
-init = tf.global_variables_initializer()
-sess.run(init)
-
-data, labels = generate_samples(100)
-
-curr_loss = sess.run(loss, feed_dict={X: data, y: labels})
-print ("The initial loss is: ", curr_loss)
-
-x_te, y_te = generate_samples(100)
-
-nepochs = 10000
-for i in trange(nepochs):
-	x_tr, y_tr = generate_samples(100)
-
-	sess.run(GD_step, feed_dict={X: x_te, y: y_te})
-
-	cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, y:y_te})
-	print()
-	print("The vectorized loss is: ", v_loss)
-	
-	print ("The final training loss is: ", cur_loss)
-
-                 
-sess.close()
+losses = []
+for i in range(36):
+    sess = tf.Session()
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    
+    #data, labels = generate_samples(100)
+    
+    #curr_loss = sess.run(loss, feed_dict={X: data, y: labels})
+    #print ("The initial loss is: ", curr_loss)
+    
+    #x_te, y_te = generate_samples(100)
+    
+    # nepochs = 10000
+    #for i in trange(nepochs):
+    data_x, data_y = generate_fixed_samples(5000, i)
+    x_tr, y_tr = data_x[:4900, :], data_y[:4900]
+    x_te, y_te = data_x[-100:, :], data_y[-100:]
+    
+    for i in range(500):
+        sess.run(GD_step, feed_dict={X: x_tr, y: y_tr})
+    
+    cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, y:y_te})
+    losses.append(cur_loss)
+    print()
+    print("The vectorized loss is: ", v_loss)
+    
+    print ("The final training loss is: ", cur_loss)
+    sess.close()
+print(losses)

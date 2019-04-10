@@ -6,11 +6,11 @@ import numpy as np
 import random
 import math
 from tqdm import tqdm, trange
-from data_generation import generate_samples
+from data_generation import generate_samples, generate_fixed_samples
 
 # general parameters
 D = 8000 # dimensionality of the data
-C = 36 # number of unique labels in the dataset
+C = 1 # number of unique labels in the dataset
 
 def equation(x):
 	return 440 * (2 ** (1/float(12))) ** (x - 49)
@@ -111,31 +111,66 @@ vector_loss = tf.reduce_mean(l,0)
 #learning_rate = tf.train.exponential_decay(lr, global_step, 50, .96, staircase=True)
 GD_step = tf.train.AdamOptimizer(lr).minimize(loss)
 
-sess = tf.Session()
+#sess = tf.Session()
+#
+#init = tf.global_variables_initializer()
+#sess.run(init)
+#
+#data, labels = generate_samples(100)
+#m, n = data.shape
+#data = data.reshape([m,n,1,1])
+#
+#curr_loss = sess.run(loss, feed_dict={X: data, Y: labels})
+#print ("The initial loss is: ", curr_loss)
 
-init = tf.global_variables_initializer()
-sess.run(init)
-
-data, labels = generate_samples(100)
-m, n = data.shape
-data = data.reshape([m,n,1,1])
-
-curr_loss = sess.run(loss, feed_dict={X: data, Y: labels})
-print ("The initial loss is: ", curr_loss)
-
-x_te, y_te = generate_samples(100)
-m, n = x_te.shape
-x_te = x_te.reshape([m,n,1,1])
-while True:
-	x_tr, y_tr = generate_samples(100)
-	m, n = x_tr.shape
-	x_tr = x_tr.reshape([m,n,1,1])
-
-        for i in range(1000):
-	    sess.run(GD_step, feed_dict={X: x_tr, Y: y_tr})
-
-	cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, Y:y_te})
-	print("The vectorized loss is: ", v_loss)
-	
-	print ("The final training loss is: ", cur_loss)
-sess.close()
+losses = []
+for i in range(24, 36):
+    sess = tf.Session()
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    
+    #data, labels = generate_samples(100)
+    
+    #curr_loss = sess.run(loss, feed_dict={X: data, y: labels})
+    #print ("The initial loss is: ", curr_loss)
+    
+    #x_te, y_te = generate_samples(100)
+    
+    # nepochs = 10000
+    #for i in trange(nepochs):
+    data_x, data_y = generate_fixed_samples(5000, i)
+    x_tr, y_tr = data_x[:4900, :], data_y[:4900]
+    m, n = x_tr.shape
+    x_tr = x_tr.reshape([m,n,1,1])
+    x_te, y_te = data_x[-100:, :], data_y[-100:]
+    q, r = x_te.shape
+    x_te = x_te.reshape([q,r,1,1])
+    
+    for i in range(500):
+        for j in range(48):
+            sess.run(GD_step, feed_dict={X: x_tr[j*100:(j+1)*100, :], Y: y_tr[j*100:(j+1)*100]})
+    
+    cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, Y:y_te})
+    losses.append(cur_loss)
+    print()
+    print("The vectorized loss is: ", v_loss)
+    
+    print ("The final training loss is: ", cur_loss)
+    sess.close()
+print(losses)
+#x_te, y_te = generate_samples(100)
+#m, n = x_te.shape
+#x_te = x_te.reshape([m,n,1,1])
+#while True:
+#	x_tr, y_tr = generate_samples(100)
+#	m, n = x_tr.shape
+#	x_tr = x_tr.reshape([m,n,1,1])
+#
+#        for i in range(1000):
+#	    sess.run(GD_step, feed_dict={X: x_tr, Y: y_tr})
+#
+#	cur_loss, v_loss = sess.run([loss, vector_loss], feed_dict={X:x_te, Y:y_te})
+#	print("The vectorized loss is: ", v_loss)
+#	
+#	print ("The final training loss is: ", cur_loss)
+#sess.close()
